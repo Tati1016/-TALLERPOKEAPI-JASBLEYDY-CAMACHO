@@ -138,7 +138,6 @@ async function pokemonMasFuerte(listaNombres, stat) {
 
 // Desafío final
 async function ejecutarDesafioFinal() {
-    // Ejercicio 4 - Comparaciones de la guía
     await compararPokemon("snorlax", "machamp", "attack");
     await compararPokemon("eevee", "gengar", "defense");
     await compararPokemon("snorlax", "machamp", "fuerza");
