@@ -1,46 +1,46 @@
-// Busca un Pokémon en la PokeAPI por su nombre
+// Busca un Pokémon en la PokeAPI
 async function buscarPokemon(nombre) {
-    const nombreMinuscula = nombre.toLowerCase();
-    const url = `https://pokeapi.co/api/v2/pokemon/${nombreMinuscula}`;
+    const nombreApi = nombre.toLowerCase();
+    const url = `https://pokeapi.co/api/v2/pokemon/${nombreApi}`;
 
     const respuesta = await fetch(url);
 
     if (!respuesta.ok) {
-        console.log(`Error: no se encontró el Pokémon "${nombre}"`);
+        console.log(`No se encontró el Pokémon "${nombre}".`);
         console.log("Status:", respuesta.status);
         return null;
     }
 
-    const datos = await respuesta.json();
-    return datos;
+    return await respuesta.json();
 }
 
-// Muestra la ficha con los datos del Pokémon
-function mostrarFicha(datos) {
-    if (datos === null) {
+// Muestra la ficha del Pokémon
+function mostrarFicha(pokemon) {
+    if (pokemon === null) {
         console.log("No hay información para mostrar.");
         return;
     }
 
-    console.log("Nombre:", datos.name.toUpperCase());
-    console.log("ID:", datos.id);
+    console.log("Nombre:", pokemon.name.toUpperCase());
+    console.log("ID:", pokemon.id);
 
     const tipos = [];
-    for (const tipo of datos.types) {
+
+    for (const tipo of pokemon.types) {
         tipos.push(tipo.type.name);
     }
-    console.log("Tipos:", tipos.join(" / "));
 
-    console.log("Altura:", datos.height * 10, "cm");
-    console.log("Peso:", datos.weight / 10, "kg");
+    console.log("Tipos:", tipos.join(" / "));
+    console.log("Altura:", pokemon.height * 10, "cm");
+    console.log("Peso:", pokemon.weight / 10, "kg");
 
     console.log("Stats:");
-    for (const stat of datos.stats) {
+    for (const stat of pokemon.stats) {
         console.log(`- ${stat.stat.name}: ${stat.base_stat}`);
     }
 
     console.log("Habilidades:");
-    for (const habilidad of datos.abilities) {
+    for (const habilidad of pokemon.abilities) {
         if (habilidad.is_hidden) {
             console.log(`- ${habilidad.ability.name} (oculta)`);
         } else {
@@ -49,19 +49,20 @@ function mostrarFicha(datos) {
     }
 }
 
-// Devuelve el valor de una stat por su nombre
-function obtenerStat(datos, nombreStat) {
-    for (const stat of datos.stats) {
-        if (stat.stat.name === nombreStat) {
+// Obtiene el valor de una stat
+function obtenerStat(pokemon, statBuscada) {
+    for (const stat of pokemon.stats) {
+        if (stat.stat.name === statBuscada) {
             return stat.base_stat;
         }
     }
+
     return null;
 }
 
-// Compara dos Pokémon en una stat elegida
+// Compara dos Pokémon usando una stat
 async function compararPokemon(nombre1, nombre2, stat) {
-    const statMinuscula = stat.toLowerCase();
+    const statApi = stat.toLowerCase();
 
     const pokemon1 = await buscarPokemon(nombre1);
     const pokemon2 = await buscarPokemon(nombre2);
@@ -71,8 +72,8 @@ async function compararPokemon(nombre1, nombre2, stat) {
         return;
     }
 
-    const valor1 = obtenerStat(pokemon1, statMinuscula);
-    const valor2 = obtenerStat(pokemon2, statMinuscula);
+    const valor1 = obtenerStat(pokemon1, statApi);
+    const valor2 = obtenerStat(pokemon2, statApi);
 
     if (valor1 === null || valor2 === null) {
         console.log(`La stat "${stat}" no existe.`);
@@ -80,29 +81,28 @@ async function compararPokemon(nombre1, nombre2, stat) {
         return;
     }
 
-    console.log("----------------------");
-    console.log(`Comparando ${pokemon1.name.toUpperCase()} vs ${pokemon2.name.toUpperCase()}`);
-    console.log(`Stat elegida: ${statMinuscula}`);
-    console.log(`${pokemon1.name}: ${valor1}`);
-    console.log(`${pokemon2.name}: ${valor2}`);
+    console.log("Comparando", pokemon1.name.toUpperCase(), "vs", pokemon2.name.toUpperCase());
+    console.log("Stat:", statApi);
+    console.log(pokemon1.name + ":", valor1);
+    console.log(pokemon2.name + ":", valor2);
 
     if (valor1 > valor2) {
-        console.log(`Gana ${pokemon1.name.toUpperCase()} en ${statMinuscula}.`);
+        console.log("Gana", pokemon1.name.toUpperCase());
     } else if (valor2 > valor1) {
-        console.log(`Gana ${pokemon2.name.toUpperCase()} en ${statMinuscula}.`);
+        console.log("Gana", pokemon2.name.toUpperCase());
     } else {
         console.log("Hay empate.");
     }
 }
 
-// Devuelve el Pokémon con la stat más alta de una lista
-async function pokemonMasFuerte(listaNombres, stat) {
-    const statMinuscula = stat.toLowerCase();
+// Encuentra el Pokémon con mayor valor en una stat
+async function pokemonMasFuerte(nombres, stat) {
+    const statApi = stat.toLowerCase();
 
-    let mejorNombre = null;
-    let mejorValor = -1;
+    let ganador = null;
+    let mayorValor = -1;
 
-    for (const nombre of listaNombres) {
+    for (const nombre of nombres) {
         const pokemon = await buscarPokemon(nombre);
 
         if (pokemon === null) {
@@ -110,34 +110,33 @@ async function pokemonMasFuerte(listaNombres, stat) {
             continue;
         }
 
-        const valorStat = obtenerStat(pokemon, statMinuscula);
+        const valor = obtenerStat(pokemon, statApi);
 
-        if (valorStat === null) {
-            console.log(`La stat "${stat}" no existe para ${nombre}.`);
-            continue;
+        if (valor === null) {
+            console.log(`La stat "${stat}" no existe.`);
+            return null;
         }
 
-        console.log(`${pokemon.name} tiene ${statMinuscula}: ${valorStat}`);
+        console.log(pokemon.name + " tiene " + statApi + ":", valor);
 
-        if (valorStat > mejorValor) {
-            mejorNombre = pokemon.name;
-            mejorValor = valorStat;
+        if (valor > mayorValor) {
+            ganador = pokemon.name;
+            mayorValor = valor;
         }
     }
 
-    if (mejorNombre === null) {
+    if (ganador === null) {
         console.log("No se pudo encontrar un ganador.");
         return null;
     }
 
-    console.log("----------------------");
-    console.log(`El Pokémon más fuerte en ${statMinuscula} es ${mejorNombre.toUpperCase()} con ${mejorValor}.`);
+    console.log("Ganador en", statApi + ":", ganador.toUpperCase(), "con", mayorValor);
 
-    return mejorNombre;
+    return ganador;
 }
 
-// Desafío final
-async function ejecutarDesafioFinal() {
+// Pruebas 
+async function correrPruebas() {
     await compararPokemon("snorlax", "machamp", "attack");
     await compararPokemon("eevee", "gengar", "defense");
     await compararPokemon("snorlax", "machamp", "fuerza");
@@ -151,17 +150,29 @@ async function ejecutarDesafioFinal() {
         "dragonite"
     ];
 
-    console.log("=== Comparación por ATTACK ===");
-    const ganadorAttack = await pokemonMasFuerte(equipo, "attack");
+    console.log("Ataque:");
+    const ganadorAtaque = await pokemonMasFuerte(equipo, "attack");
 
-    console.log("\n=== Comparación por DEFENSE ===");
+    console.log("Defensa:");
     await pokemonMasFuerte(equipo, "defense");
 
-    console.log("\n=== Ficha completa del ganador en ATTACK ===");
-    if (ganadorAttack !== null) {
-        const datosGanador = await buscarPokemon(ganadorAttack);
-        mostrarFicha(datosGanador);
+    console.log("Ficha del ganador:");
+    if (ganadorAtaque !== null) {
+        const pokemonGanador = await buscarPokemon(ganadorAtaque);
+        mostrarFicha(pokemonGanador);
     }
 }
 
-ejecutarDesafioFinal();
+// Inicio del programa
+async function main() {
+    const args = process.argv.slice(2);
+
+    if (args.length === 3) {
+        await compararPokemon(args[0], args[1], args[2]);
+        return;
+    }
+
+    await correrPruebas();
+}
+
+main();
